@@ -17,72 +17,34 @@ export class StorageService {
     // this.resetIndexedDB();
   }
 
-  // Create / Update
-  async addTaskItem(item: Task) {
-    await this.addTask(item);
+  async addTask(item: Task) {
+    const db = await openDB(`${this.dbName}`, this.dbVersion);
+    return db.add(this.tasks, item, item.uuid);
   }
 
-  async updateTaskItem(item: Task) {
-    await this.updateTask(item);
+  async updateTask(item: Task) {
+    const db = await openDB(`${this.dbName}`, this.dbVersion);
+    return db.put(this.tasks, item, item.uuid);
   }
 
-  // Read
-  getTask(id: string | null): Promise<Task> {
-    const dbPromise = openDB(`${this.dbName}`, this.dbVersion);
-    return dbPromise.then((db) => {
-      return db.get(`${this.tasks}`, id ? id : '');
-    });
+  async getTask(id: string | null): Promise<Task> {
+    const db = await openDB(`${this.dbName}`, this.dbVersion);
+    return db.get(this.tasks, id ? id : '');
   }
 
-  getTasks(): Promise<Task[]> {
-    const dbPromise = openDB(`${this.dbName}`, this.dbVersion);
-    return dbPromise.then((db) => {
-      return db.getAll(`${this.tasks}`);
-    });
+  async getTasks(): Promise<Task[]> {
+    const db = await openDB(`${this.dbName}`, this.dbVersion);
+    return db.getAll(this.tasks);
   }
 
-  getItem<T>(storeName: string, id: string | null): Observable<T> {
-    const dbPromise = openDB(`${this.dbName}`, this.dbVersion);
-    return from(
-      dbPromise.then((db) => {
-        return db.get(storeName, id ? id : '');
-      }),
-    );
+  private async resetIndexedDB() {
+    await this.clearTasks();
+    this.restoreIndexedDB();
   }
 
-  getItems<T>(storeName: string): Promise<T[]> {
-    const dbPromise = openDB(`${this.dbName}`, this.dbVersion);
-    return dbPromise.then((db) => {
-      return db.getAll(storeName);
-    });
-  }
-
-  async resetIndexedDB() {
-    const tasks = this.clearTasks();
-    await Promise.allSettled([tasks]).then(() => {
-      this.restoreIndexedDB();
-    });
-  }
-
-  private addTask(item: Task) {
-    const dbPromise = openDB(`${this.dbName}`, this.dbVersion);
-    return dbPromise.then((db) => {
-      return db.add(this.tasks, item, item.uuid);
-    });
-  }
-
-  private updateTask(item: Task) {
-    const dbPromise = openDB(`${this.dbName}`, this.dbVersion);
-    return dbPromise.then((db) => {
-      return db.put(this.tasks, item, item.uuid);
-    });
-  }
-
-  private clearTasks() {
-    const dbPromise = openDB(`${this.dbName}`, this.dbVersion);
-    return dbPromise.then((db) => {
-      return db.clear(`${this.tasks}`);
-    });
+  private async clearTasks() {
+    const db = await openDB(`${this.dbName}`, this.dbVersion);
+    return db.clear(this.tasks);
   }
 
   private restoreIndexedDB(tasks = `${this.tasks}`) {

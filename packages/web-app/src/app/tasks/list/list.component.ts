@@ -21,21 +21,18 @@ export class ListComponent {
   }
 
   onDoneTask(item: Task): void {
-    // TODO: mark as completed
-    // TODO: save updated task to storage
-    throw new Error('Not implemented');
+    item.completed = true;
+    this.storageService.updateTask(item);
   }
 
   onDeleteTask(item: Task): void {
-    // TODO: mark as archived
-    // TODO: save updated task to storage
-    // TODO: refresh list without archived items
-    throw new Error('Not implemented');
+    item.isArchived = true;
+    this.storageService.updateTask(item);
+    this.tasksService.getTasksFromStorage();
   }
 
   onAddTask(): void {
-    // TODO: navigate to add task
-    throw new Error('Not implemented');
+    this.router.navigate(['add']);
   }
 
   private getTaskList(): void {
@@ -44,7 +41,7 @@ export class ListComponent {
       .pipe(take(1))
       .subscribe(async (tasks) => {
         tasks.forEach(async (task) => {
-          await this.storageService.updateTaskItem(task);
+          await this.storageService.updateTask(task);
         });
         await this.tasksService.getTasksFromStorage();
       });

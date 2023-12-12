@@ -17,8 +17,10 @@ import { MatIconModule } from '@angular/material/icon';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { StorageService } from '../../storage/storage.service';
 import { Router } from '@angular/router';
+import { RouterTestingModule } from '@angular/router/testing';
 import { MatInputModule } from '@angular/material/input';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+import { routes } from '../../app.module';
 
 const fakeTasks: Task[] = [
   generateTask({ uuid: '3', completed: false }),
@@ -42,7 +44,7 @@ class MockStorageService {
   getTasks(): Promise<Task[]> {
     return Promise.resolve(fakeTasks);
   }
-  updateTaskItem(): void {
+  updateTask(): void {
     return;
   }
 }
@@ -77,12 +79,16 @@ describe('ListComponent', () => {
   });
 
   beforeEach(() => {
+    TestBed.configureTestingModule({
+      imports: [RouterTestingModule.withRoutes(routes)],
+    });
     router = TestBed.inject(Router);
     tasksService = TestBed.inject(TasksService);
     fixture = TestBed.createComponent(ListComponent);
     component = fixture.componentInstance;
     loader = TestbedHarnessEnvironment.loader(fixture);
     fixture.detectChanges();
+    router.initialNavigation();
   });
 
   it('should create', () => {
@@ -107,13 +113,12 @@ describe('ListComponent', () => {
   });
 
   it(`should navigate to /add when add button is clicked`, async () => {
-    jest.spyOn(router, 'navigate').mockResolvedValue(true);
     const addButton = await loader.getHarness(
       MatButtonHarness.with({ selector: '[data-testid="add-task"]' }),
     );
     await addButton.click();
     fixture.detectChanges();
-    expect(router.navigate).toHaveBeenCalledWith(['add']);
+    expect(router.url).toEqual('/add');
   });
 
   it(`should mark a task as complete when done button is clicked`, async () => {
@@ -136,11 +141,21 @@ describe('ListComponent', () => {
       MatButtonHarness.with({ selector: '[data-testid="delete-task"]' }),
     );
     await deleteButton.click();
-    deleteButton.click();
     fixture.detectChanges();
     expect(component.onDeleteTask).toHaveBeenCalledTimes(1);
     expect(tasksService.tasks[0].isArchived).toBe(true);
   });
 
-  it.todo(`should not display archived tasks after deleting them`);
+  it.skip(`should not display archived tasks after deleting them`, async () => {
+    tasksService.tasks[0].isArchived = false;
+    const taskLists = fixture.debugElement.queryAll(By.css('mat-card'));
+    expect(taskLists.length).toEqual(fakeTasks.length);
+    const deleteButton = await loader.getHarness(
+      MatButtonHarness.with({ selector: '[data-testid="delete-task"]' }),
+    );
+    await deleteButton.click();
+    fixture.detectChanges();
+    const newTaskLists = fixture.debugElement.queryAll(By.css('mat-card'));
+    expect(newTaskLists.length).toEqual(taskLists.length - 1);
+  });
 });

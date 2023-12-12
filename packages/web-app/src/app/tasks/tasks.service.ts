@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { Task } from '@take-home/shared';
+import { Task, TaskPriority } from '@take-home/shared';
 import { StorageService } from '../storage/storage.service';
 
 @Injectable({ providedIn: 'root' })
@@ -29,11 +29,24 @@ export class TasksService {
         this.tasks = this.tasks.filter((task) => !task.isArchived);
         break;
       case 'priority':
-        // TODO: add fitler for taks with High Priority
-        throw new Error('Not implemented');
+        this.tasks = this.tasks.filter(
+          (task) => task.priority === TaskPriority.HIGH,
+        );
+        break;
       case 'scheduledDate':
-        // TODO: add fitler for tasks Due Today
-        throw new Error('Not implemented');
+        const today = new Date();
+        this.tasks = this.tasks.filter((task) => {
+          const scheduledDate =
+            task.scheduledDate instanceof Date
+              ? task.scheduledDate
+              : new Date(task.scheduledDate);
+          return (
+            today.getFullYear() === scheduledDate.getFullYear() &&
+            today.getMonth() === scheduledDate.getMonth() &&
+            today.getDate() === scheduledDate.getDate()
+          );
+        });
+        break;
       case 'completed':
         this.tasks = this.tasks.filter((task) => !task.completed);
     }
@@ -41,11 +54,12 @@ export class TasksService {
 
   searchTask(search: string): void {
     if (search) {
-      // TODO: filter tasks which title include search value
-      throw new Error('Not implemented');
+      const searchLower = search.toLocaleLowerCase();
+      this.tasks = this.tasks.filter((task) =>
+        task.title.toLocaleLowerCase().includes(searchLower),
+      );
     } else {
-      // TODO: reload all tasks from storage
-      throw new Error('Not implemented');
+      this.getTasksFromStorage();
     }
   }
 }
