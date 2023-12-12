@@ -145,6 +145,13 @@ describe('TasksService', () => {
       expect(service.tasks.length).toEqual(2);
     });
 
-    it.todo('should search task list for a fuzzy match on title');
+    it('should search task list for a fuzzy match on title', () => {
+      service.tasks = [
+        generateTask({ title: 'Take home assignment' }),
+        generateTask({ title: 'Thank you for your time' }),
+      ];
+      service.searchTask('hoem');
+      expect(service.tasks.length).toEqual(1);
+    });
   });
 });

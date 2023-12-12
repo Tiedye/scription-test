@@ -11,5 +11,5 @@ export interface Task {
   priority: TaskPriority;
   completed: boolean;
   isArchived: boolean;
-  scheduledDate: Date;
+  scheduledDate: Date | string;
 }

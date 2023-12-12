@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { Task, TaskPriority } from '@take-home/shared';
 import { StorageService } from '../storage/storage.service';
+import Fuse from 'fuse.js';
 
 @Injectable({ providedIn: 'root' })
 export class TasksService {
@@ -54,10 +55,8 @@ export class TasksService {
 
   searchTask(search: string): void {
     if (search) {
-      const searchLower = search.toLocaleLowerCase();
-      this.tasks = this.tasks.filter((task) =>
-        task.title.toLocaleLowerCase().includes(searchLower),
-      );
+      const fuse = new Fuse(this.tasks, { keys: ['title', 'description'] });
+      this.tasks = fuse.search(search).map((r) => r.item);
     } else {
       this.getTasksFromStorage();
     }
