@@ -19,7 +19,7 @@ import { StorageService } from '../../storage/storage.service';
 import { Router } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { MatInputModule } from '@angular/material/input';
-import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { routes } from '../../app.module';
 import { TasksSyncService } from '../tasks-sync.service';
 
@@ -69,7 +69,7 @@ describe('ListComponent', () => {
     TestBed.configureTestingModule({
       imports: [
         BrowserModule,
-        BrowserAnimationsModule,
+        NoopAnimationsModule,
         FormsModule,
         ReactiveFormsModule,
         MatCardModule,
@@ -109,15 +109,15 @@ describe('ListComponent', () => {
   });
 
   it('should display the title', () => {
-    const title = fixture.debugElement.query(By.css('h1'));
+    const title = fixture.debugElement.query(By.css('header'));
     expect(title.nativeElement.textContent).toEqual('My Daily Tasks');
   });
 
   it(`should display total number of tasks`, async () => {
     fixture.detectChanges();
-    const total = fixture.debugElement.query(By.css('h3'));
-    expect(total.nativeElement.textContent).toEqual(
-      `Total Tasks: ${fakeTasks.length}`,
+    const total = fixture.debugElement.query(By.css('.results-info'));
+    expect(total.nativeElement.textContent.trim()).toEqual(
+      `${fakeTasks.length} results`,
     );
   });
 
@@ -156,7 +156,6 @@ describe('ListComponent', () => {
       MatButtonHarness.with({ selector: '[data-testid="delete-task"]' }),
     );
     await deleteButton.click();
-    fixture.detectChanges();
     expect(component.onDeleteTask).toHaveBeenCalledTimes(1);
     expect(storageService.tasks[0].isArchived).toBe(true);
   });

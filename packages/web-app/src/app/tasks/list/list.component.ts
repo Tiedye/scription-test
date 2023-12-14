@@ -5,11 +5,43 @@ import { TasksPaginationService } from '../tasks-pagination.service';
 import { Router } from '@angular/router';
 import { StorageService } from '../../storage/storage.service';
 import { TasksSyncService } from '../tasks-sync.service';
+import {
+  animate,
+  query,
+  stagger,
+  style,
+  transition,
+  trigger,
+} from '@angular/animations';
 
 @Component({
   selector: 'take-home-list-component',
   templateUrl: './list.component.html',
   styleUrls: ['./list.component.scss'],
+  animations: [
+    trigger('filterAnimation', [
+      transition(':enter, * => 0, * => -1', []),
+      transition(':increment', [
+        query(
+          ':enter',
+          [
+            style({ opacity: 0, height: 0 }),
+            stagger(150, [
+              animate('300ms ease-out', style({ opacity: 1, height: '*' })),
+            ]),
+          ],
+          { optional: true },
+        ),
+      ]),
+      transition(':decrement', [
+        query(':leave', [
+          stagger(50, [
+            animate('300ms ease-out', style({ opacity: 0, height: 0 })),
+          ]),
+        ]),
+      ]),
+    ]),
+  ],
 })
 export class ListComponent {
   constructor(
@@ -18,22 +50,28 @@ export class ListComponent {
     private tasksSyncService: TasksSyncService,
     private router: Router,
   ) {
-    this.tasksSyncService.syncFromApi();
+    this.tasksSyncService
+      .syncFromApi()
+      .then(() => this.tasksPaginationService.refresh());
   }
 
-  onDoneTask(item: Task): void {
+  async onDoneTask(item: Task) {
     item.completed = true;
-    this.storageService.updateTask(item);
+    await this.storageService.updateTask(item);
     this.tasksPaginationService.refresh();
   }
 
-  onDeleteTask(item: Task): void {
+  async onDeleteTask(item: Task) {
     item.isArchived = true;
-    this.storageService.updateTask(item);
+    await this.storageService.updateTask(item);
     this.tasksPaginationService.refresh();
   }
 
   onAddTask(): void {
     this.router.navigate(['add']);
+  }
+
+  taskTrackBy(index: number, task: Task) {
+    return task.uuid;
   }
 }

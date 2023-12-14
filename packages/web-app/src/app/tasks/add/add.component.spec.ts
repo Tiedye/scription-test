@@ -86,7 +86,7 @@ describe('AddComponent', () => {
   });
 
   it('should display the title', () => {
-    const title = fixture.debugElement.query(By.css('h1'));
+    const title = fixture.debugElement.query(By.css('header'));
     expect(title.nativeElement.textContent).toEqual('Add Task');
   });
 

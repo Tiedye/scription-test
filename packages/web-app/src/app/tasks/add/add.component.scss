@@ -1,17 +1,18 @@
 .container {
-  justify-content: space-around;
+  display: flex;
+  flex-direction: column;
+  max-width: var(--layout-width-max);
+  margin-inline: auto;
+  padding: var(--layout-padding);
+  gap: var(--layout-gap-size);
 
   form {
-    display: inline-flex;
-    flex-direction: column;
-    margin: 5px;
-    width: min(calc(100vw - var(--layout-padding)), var(--layout-width-max));
-    gap: var(--layout-gap-size);
-
-    .action-button-row {
-      display: flex;
-      justify-content: center;
-      gap: var(--layout-gap-size);
-    }
+    display: contents;
   }
+}
+
+.action-button-row {
+  display: flex;
+  justify-content: center;
+  gap: var(--layout-gap-size);
 }

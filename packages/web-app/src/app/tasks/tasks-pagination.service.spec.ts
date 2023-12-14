@@ -34,27 +34,23 @@ describe('TasksService', () => {
     service = TestBed.inject(TasksPaginationService);
   });
 
-  describe('tasks', () => {
-    it('should load tasks from storage', (done) => {
+  describe('refresh', () => {
+    it('should load tasks from storage', async () => {
       jest.spyOn(storageService, 'getTasks').mockResolvedValueOnce([]);
-      service.tasks.then((tasks) => {
-        expect(tasks).toEqual([]);
-        expect(storageService.getTasks).toHaveBeenCalledTimes(1);
-        done();
-      });
+      await service.refresh();
+      expect(service.tasks).toEqual([]);
+      expect(storageService.getTasks).toHaveBeenCalledTimes(1);
     });
 
-    it('should filter tasks by isArchived', (done) => {
+    it('should filter tasks by isArchived', async () => {
       jest
         .spyOn(storageService, 'getTasks')
         .mockResolvedValueOnce([
           generateTask({ isArchived: true }),
           generateTask({}),
         ]);
-      service.tasks.then((tasks) => {
-        expect(tasks.length).toEqual(1);
-        done();
-      });
+      await service.refresh();
+      expect(service.tasks.length).toEqual(1);
     });
   });
 
@@ -64,8 +60,9 @@ describe('TasksService', () => {
         generateTask({ priority: TaskPriority.LOW }),
         generateTask({ priority: TaskPriority.HIGH }),
       ];
+      await service.refresh();
       service.setFilter('priority', true);
-      expect((await service.tasks).length).toEqual(1);
+      expect(service.tasks.length).toEqual(1);
     });
 
     it('should filter task by completed key', async () => {
@@ -73,8 +70,9 @@ describe('TasksService', () => {
         generateTask({ completed: false }),
         generateTask({ completed: true }),
       ];
+      await service.refresh();
       service.setFilter('completed', true);
-      expect((await service.tasks).length).toEqual(1);
+      expect(service.tasks.length).toEqual(1);
     });
 
     it('should filter task by scheduledDate key', async () => {
@@ -96,8 +94,9 @@ describe('TasksService', () => {
           ),
         }),
       ];
+      await service.refresh();
       service.setFilter('scheduledDate', true);
-      expect((await service.tasks).length).toEqual(1);
+      expect(service.tasks.length).toEqual(1);
     });
   });
 
@@ -107,8 +106,9 @@ describe('TasksService', () => {
         generateTask({ title: 'Take home assignment' }),
         generateTask({ title: 'Thank you for your time' }),
       ];
+      await service.refresh();
       service.setSearch('home');
-      expect((await service.tasks).length).toEqual(1);
+      expect(service.tasks.length).toEqual(1);
     });
 
     it('should reset task list if search term is empty', async () => {
@@ -116,8 +116,9 @@ describe('TasksService', () => {
         generateTask({ title: 'Take home assignment' }),
         generateTask({ title: 'Thank you for your time' }),
       ];
+      await service.refresh();
       service.setSearch('');
-      expect((await service.tasks).length).toEqual(2);
+      expect(service.tasks.length).toEqual(2);
     });
 
     it('should search task list for a fuzzy match on title', async () => {
@@ -125,8 +126,9 @@ describe('TasksService', () => {
         generateTask({ title: 'Take home assignment' }),
         generateTask({ title: 'Thank you for your time' }),
       ];
+      await service.refresh();
       service.setSearch('hoem');
-      expect((await service.tasks).length).toEqual(1);
+      expect(service.tasks.length).toEqual(1);
     });
   });
 });

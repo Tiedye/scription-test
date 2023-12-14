@@ -1,5 +1,11 @@
-// Custom Theming
-@import 'theming/theme';
+html,
+body {
+  margin: 0px;
 
-// Core Styles
-@import 'global';
+  font-family: system-ui, sans-serif;
+}
+
+.title {
+  font-size: 2rem;
+  line-height: 2;
+}

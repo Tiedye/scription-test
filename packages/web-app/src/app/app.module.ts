@@ -23,7 +23,6 @@ import { SearchComponent } from './tasks/search/search.component';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MatChipsModule } from '@angular/material/chips';
 import { CommonModule } from '@angular/common';
-import { StorageService } from './storage/storage.service';
 
 export const routes: Route[] = [
   {

@@ -7,7 +7,8 @@ import Fuse from 'fuse.js';
 
 @Injectable({ providedIn: 'root' })
 export class TasksPaginationService {
-  private taskCache: Promise<Task[]> = Promise.resolve([]);
+  private allTasks: Task[] = [];
+  private taskCache: Task[] = [];
   private cacheStale = true;
   private filter: keyof Task | undefined;
   private search = '';
@@ -32,7 +33,8 @@ export class TasksPaginationService {
     this.cacheStale = true;
   }
 
-  refresh(): void {
+  async refresh() {
+    this.allTasks = await this.storageService.getTasks();
     this.cacheStale = true;
   }
 
@@ -72,12 +74,12 @@ export class TasksPaginationService {
     return tasks;
   }
 
-  get tasks(): Promise<Task[]> {
+  get tasks(): Task[] {
     if (this.cacheStale) {
-      this.taskCache = this.storageService
-        .getTasks()
-        .then((tasks) => this.filterTasks(tasks, ['isArchived', this.filter]))
-        .then((tasks) => this.searchTasks(tasks, this.search));
+      this.taskCache = this.searchTasks(
+        this.filterTasks(this.allTasks, ['isArchived', this.filter]),
+        this.search,
+      );
       this.cacheStale = false;
     }
     return this.taskCache;

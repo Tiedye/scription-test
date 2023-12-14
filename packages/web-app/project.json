@@ -19,7 +19,10 @@
           "packages/web-app/src/favicon.ico",
           "packages/web-app/src/assets"
         ],
-        "styles": ["packages/web-app/src/styles/styles.scss"],
+        "styles": [
+          "packages/web-app/src/styles/styles.scss",
+          "packages/web-app/src/styles/theme.scss"
+        ],
         "scripts": []
       },
       "configurations": {
