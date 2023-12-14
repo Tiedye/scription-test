@@ -1,6 +1,6 @@
 <div class="container">
   <h1>My Daily Tasks</h1>
-  <h3>Total Tasks: {{ tasksService.tasks.length }}</h3>
+  <h3>Total Tasks: {{ (tasksPaginationService.tasks | async)?.length }}</h3>
   <take-home-filters-component></take-home-filters-component>
   <take-home-search-component></take-home-search-component>
   <div class="action-button-row">
@@ -9,7 +9,7 @@
     </button>
   </div>
   <div class="tasks">
-    <ng-container *ngFor="let item of tasksService.tasks">
+    <ng-container *ngFor="let item of tasksPaginationService.tasks | async">
       <mat-card [class.complete]="item.completed">
         <mat-card-title>{{ item.title }}</mat-card-title>
         <mat-card-header>{{

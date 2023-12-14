@@ -1,11 +1,11 @@
 import { HarnessLoader } from '@angular/cdk/testing';
 import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, tick } from '@angular/core/testing';
 import { BrowserModule, By } from '@angular/platform-browser';
 import { Task, generateTask } from '@take-home/shared';
 import { Observable, of } from 'rxjs';
 import { ListComponent } from './list.component';
-import { TasksService } from '../tasks.service';
+import { TasksPaginationService } from '../tasks-pagination.service';
 import { MatCardModule } from '@angular/material/card';
 import { FiltersComponent } from '../filters/filters.component';
 import { SearchComponent } from '../search/search.component';
@@ -21,39 +21,48 @@ import { RouterTestingModule } from '@angular/router/testing';
 import { MatInputModule } from '@angular/material/input';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { routes } from '../../app.module';
+import { TasksSyncService } from '../tasks-sync.service';
 
 const fakeTasks: Task[] = [
   generateTask({ uuid: '3', completed: false }),
   generateTask({ uuid: '4', completed: false }),
 ];
 
-class MockTasksService {
-  tasks: Task[] = fakeTasks;
-  getTasksFromApi(): Observable<Task[]> {
-    return of(fakeTasks);
+class InMemStorageService {
+  private items = new Map<string, Task>(fakeTasks.map((t) => [t.uuid, t]));
+
+  get tasks(): Task[] {
+    return Array.from(this.items.values());
   }
-  getTasksFromStorage(): Promise<Task[]> {
-    return Promise.resolve(fakeTasks);
+
+  async addTask(item: Task) {
+    this.items.set(item.uuid, item);
   }
-  filterTask(): void {
-    return;
+
+  async updateTask(item: Task) {
+    this.items.set(item.uuid, item);
+  }
+
+  async getTask(id: string | null): Promise<Task | undefined> {
+    if (!id) return undefined;
+    return this.items.get(id);
+  }
+
+  async getTasks(): Promise<Task[]> {
+    return Array.from(this.items.values());
   }
 }
 
-class MockStorageService {
-  getTasks(): Promise<Task[]> {
-    return Promise.resolve(fakeTasks);
-  }
-  updateTask(): void {
-    return;
-  }
+class MockTasksSyncService {
+  async syncFromApi(): Promise<void> {}
 }
 
 describe('ListComponent', () => {
   let fixture: ComponentFixture<ListComponent>;
   let loader: HarnessLoader;
   let component: ListComponent;
-  let tasksService: TasksService;
+  let tasksService: TasksPaginationService;
+  let storageService: InMemStorageService;
   let router: Router;
 
   beforeEach(() => {
@@ -72,18 +81,22 @@ describe('ListComponent', () => {
       ],
       declarations: [ListComponent, FiltersComponent, SearchComponent],
       providers: [
-        { provide: TasksService, useClass: MockTasksService },
-        { provide: StorageService, useClass: MockStorageService },
+        TasksPaginationService,
+        { provide: StorageService, useClass: InMemStorageService },
+        { provide: TasksSyncService, useClass: MockTasksSyncService },
       ],
     }).compileComponents();
   });
 
-  beforeEach(() => {
+  beforeEach(async () => {
     TestBed.configureTestingModule({
       imports: [RouterTestingModule.withRoutes(routes)],
     });
     router = TestBed.inject(Router);
-    tasksService = TestBed.inject(TasksService);
+    tasksService = TestBed.inject(TasksPaginationService);
+    storageService = TestBed.inject(
+      StorageService,
+    ) as unknown as InMemStorageService;
     fixture = TestBed.createComponent(ListComponent);
     component = fixture.componentInstance;
     loader = TestbedHarnessEnvironment.loader(fixture);
@@ -100,7 +113,8 @@ describe('ListComponent', () => {
     expect(title.nativeElement.textContent).toEqual('My Daily Tasks');
   });
 
-  it(`should display total number of tasks`, () => {
+  it(`should display total number of tasks`, async () => {
+    fixture.detectChanges();
     const total = fixture.debugElement.query(By.css('h3'));
     expect(total.nativeElement.textContent).toEqual(
       `Total Tasks: ${fakeTasks.length}`,
@@ -108,6 +122,7 @@ describe('ListComponent', () => {
   });
 
   it(`should display list of tasks as mat-cards`, () => {
+    fixture.detectChanges();
     const taskLists = fixture.debugElement.queryAll(By.css('mat-card'));
     expect(taskLists.length).toEqual(fakeTasks.length);
   });
@@ -122,7 +137,7 @@ describe('ListComponent', () => {
   });
 
   it(`should mark a task as complete when done button is clicked`, async () => {
-    expect(tasksService.tasks[0].completed).toBe(false);
+    expect(storageService.tasks[0].completed).toBe(false);
     jest.spyOn(component, 'onDoneTask');
     const doneButton = await loader.getHarness(
       MatButtonHarness.with({ selector: '[data-testid="complete-task"]' }),
@@ -131,11 +146,11 @@ describe('ListComponent', () => {
     doneButton.click();
     fixture.detectChanges();
     expect(component.onDoneTask).toHaveBeenCalledTimes(1);
-    expect(tasksService.tasks[0].completed).toBe(true);
+    expect(storageService.tasks[0].completed).toBe(true);
   });
 
   it(`should mark a task as archived when delete button is clicked`, async () => {
-    expect(tasksService.tasks[0].isArchived).toBe(false);
+    expect(storageService.tasks[0].isArchived).toBe(false);
     jest.spyOn(component, 'onDeleteTask');
     const deleteButton = await loader.getHarness(
       MatButtonHarness.with({ selector: '[data-testid="delete-task"]' }),
@@ -143,19 +158,19 @@ describe('ListComponent', () => {
     await deleteButton.click();
     fixture.detectChanges();
     expect(component.onDeleteTask).toHaveBeenCalledTimes(1);
-    expect(tasksService.tasks[0].isArchived).toBe(true);
+    expect(storageService.tasks[0].isArchived).toBe(true);
   });
 
-  it.skip(`should not display archived tasks after deleting them`, async () => {
-    tasksService.tasks[0].isArchived = false;
-    const taskLists = fixture.debugElement.queryAll(By.css('mat-card'));
-    expect(taskLists.length).toEqual(fakeTasks.length);
+  it(`should not display archived tasks after deleting them`, async () => {
+    storageService.tasks[0].isArchived = false;
+    storageService.tasks[1].isArchived = false;
+    fixture.detectChanges();
     const deleteButton = await loader.getHarness(
       MatButtonHarness.with({ selector: '[data-testid="delete-task"]' }),
     );
     await deleteButton.click();
-    fixture.detectChanges();
-    const newTaskLists = fixture.debugElement.queryAll(By.css('mat-card'));
-    expect(newTaskLists.length).toEqual(taskLists.length - 1);
+
+    const taskLists = fixture.debugElement.queryAll(By.css('mat-card'));
+    expect(taskLists.length).toEqual(fakeTasks.length - 1);
   });
 });

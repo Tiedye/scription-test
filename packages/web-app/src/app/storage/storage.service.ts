@@ -1,6 +1,5 @@
 import { Injectable } from '@angular/core';
 import { openDB } from 'idb';
-import { from, Observable } from 'rxjs';
 
 import { Task } from '@take-home/shared';
 
@@ -19,12 +18,12 @@ export class StorageService {
 
   async addTask(item: Task) {
     const db = await openDB(`${this.dbName}`, this.dbVersion);
-    return db.add(this.tasks, item, item.uuid);
+    await db.add(this.tasks, item, item.uuid);
   }
 
   async updateTask(item: Task) {
     const db = await openDB(`${this.dbName}`, this.dbVersion);
-    return db.put(this.tasks, item, item.uuid);
+    await db.put(this.tasks, item, item.uuid);
   }
 
   async getTask(id: string | null): Promise<Task> {

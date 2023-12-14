@@ -4,6 +4,7 @@ import { Router } from '@angular/router';
 import { Task, TaskPriority } from '@take-home/shared';
 import { StorageService } from '../../storage/storage.service';
 import { faker } from '@faker-js/faker';
+import { TasksPaginationService } from '../tasks-pagination.service';
 
 @Component({
   selector: 'take-home-add-component',
@@ -39,7 +40,11 @@ export class AddComponent {
   });
   protected priorities = Object.values(TaskPriority);
 
-  constructor(private storageService: StorageService, private router: Router) {}
+  constructor(
+    private storageService: StorageService,
+    private tasksPaginationService: TasksPaginationService,
+    private router: Router,
+  ) {}
 
   onSubmit() {
     const newTask: Task = {
@@ -49,6 +54,7 @@ export class AddComponent {
     };
 
     this.storageService.addTask(newTask);
+    this.tasksPaginationService.refresh();
     this.router.navigate(['/']);
   }
 

@@ -5,7 +5,7 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
-import { TasksService } from '../tasks.service';
+import { TasksPaginationService } from '../tasks-pagination.service';
 
 class MockTasksService {
   searchTask(): void {
@@ -27,7 +27,9 @@ describe('SearchComponent', () => {
         MatInputModule,
       ],
       declarations: [SearchComponent],
-      providers: [{ provide: TasksService, useClass: MockTasksService }],
+      providers: [
+        { provide: TasksPaginationService, useClass: MockTasksService },
+      ],
     });
 
     fixture = TestBed.createComponent(SearchComponent);

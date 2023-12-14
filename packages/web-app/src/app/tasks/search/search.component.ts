@@ -1,6 +1,6 @@
 import { Component } from '@angular/core';
 import { FormControl, FormGroup } from '@angular/forms';
-import { TasksService } from '../tasks.service';
+import { TasksPaginationService } from '../tasks-pagination.service';
 import { debounceTime, distinctUntilChanged } from 'rxjs';
 
 @Component({
@@ -13,11 +13,11 @@ export class SearchComponent {
     search: new FormControl(null),
   });
 
-  constructor(private taskService: TasksService) {
+  constructor(private taskService: TasksPaginationService) {
     this.searchForm.controls['search'].valueChanges
       .pipe(debounceTime(500), distinctUntilChanged())
       .subscribe((searchValue) => {
-        this.taskService.searchTask(searchValue);
+        this.taskService.setSearch(searchValue);
       });
   }
 }
